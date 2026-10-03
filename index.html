@@ -1309,4 +1309,393 @@
 </body>
 </html>
 
+<script>
+/* ULİNKA — Yönetim kurulu avatarları (ekranda yürüyen Minecraft tarzı piksel karakterler) */
+(function () {
+  'use strict';
+
+  /* Izgara: 16 x 33 piksel. Satır 0 = kafanın üstündeki hacim (kıvırcık saç, başörtüsü tepesi),
+     kafa 8x8 (x4-11, y1-8), gövde 8x12 (y9-20), kollar 4x12 (ince model 3x12), bacaklar 4x12 (y21-32). */
+
+  const ORTAK = { s: '#f1c6a0', S: '#dca884', w: '#ffffff', e: '#3a2418', m: '#a5584a', y: '#d9b04f' };
+
+  const UYELER = [
+    { ad: 'Zeynep Leblebicier', gorev: 'Yönetim Kurulu Başkanı', ince: true,
+      renk: { h: '#2e1a12', H: '#4a2c1e', c: '#1f2226', C: '#16181b', l: '#c8243a', p: '#2b3140', P: '#20252f', o: '#1a1a1a' },
+      kafa: ['.hhhhhh.', 'hhhhhhhh', 'hhhHhhhh', 'hhsssssh', 'hssssssh', 'hwessewh', 'hssSSssh', 'hssllssh', 'hssssssh'],
+      govde: 'kolye', sac: { satir: 7, dalgali: true }, kol: 3 },
+    { ad: 'Şule Civil', gorev: 'Yönetim Kurulu Başkan Yardımcısı', ince: true,
+      renk: { h: '#6b4429', H: '#85573a', c: '#f3eee4', C: '#dcd5c8', p: '#7d9cc0', P: '#6886ab', o: '#f2f2f2' },
+      kafa: [null, 'hhhhhhhh', 'hhhhhHhh', 'hssssshh', 'hssssssh', 'hwessewh', 'hssSSssh', 'hssmmssh', 'hssssssh'],
+      govde: 'omuzAcik', sac: { satir: 9 }, kol: 11 },
+    { ad: 'İrem Nur Bulut', gorev: 'Yönetim Kurulu Genel Sekreteri', ince: true,
+      renk: { h: '#2a1a12', H: '#3d281c', c: '#f5f1ea', C: '#ddd6cb', p: '#3c4a63', P: '#313d52', o: '#f0f0f0' },
+      kafa: [null, 'hhhhhhhh', 'hhHhhhhh', 'hhhssssh', 'hssssssh', 'hwessewh', 'hssSSssh', 'hssmmssh', 'hssssssh'],
+      govde: 'kolye', sac: { satir: 3 }, kol: 11 },
+    { ad: 'Hanife Avcu', gorev: 'Girişimcilik ve İnovasyon Direktörü', ince: true,
+      renk: { h: '#4b2d1d', H: '#62402b', g: '#1b1f1f', c: '#1b1b1f', C: '#111114', i: '#f7f5f0', p: '#1f1f24', P: '#17171b', o: '#111111' },
+      kafa: [null, 'hhhhhhhh', 'hhhhHhhh', 'hssssssh', 'hggssggh', 'gweggewg', 'hggSSggh', 'hssmmssh', 'hssssssh'],
+      govde: 'blazer', sac: { satir: 5 }, kol: 11 },
+    { ad: 'Hazal Başak', gorev: 'Kişisel Gelişim Direktörü', ince: true,
+      renk: { k: '#7a7a58', K: '#66664a', c: '#efe8dc', C: '#d8d0c2', l: '#d4485a', p: '#d9cdb8', P: '#c7baa2', o: '#8a6a4a' },
+      kafa: ['.kkkkkk.', 'kkkkkkkk', 'kKKKKKKk', 'kssssssk', 'kssssssk', 'kwessewk', 'kssSSssk', 'kssllssk', 'kksssskk'],
+      govde: 'basortusu', uc: true, kol: 11 },
+    { ad: 'Ayşe Naz Bozbey', gorev: 'Sosyal Medya ve Tasarım Direktörü', ince: true,
+      renk: { k: '#4a3124', K: '#3b271d', c: '#eee6d8', C: '#d6ccbb', p: '#2e2b2a', P: '#242221', o: '#1a1a1a' },
+      kafa: ['.kkkkkk.', 'kkkkkkkk', 'kKKKKKKk', 'kssssssk', 'kssssssk', 'kwessewk', 'kssSSssk', 'kssmmssk', 'kksssskk'],
+      govde: 'basortusuUzun', kol: 11 },
+    { ad: 'Osman Sarışen', gorev: 'Etkinlik ve Organizasyon Direktörü',
+      renk: { h: '#1b1512', H: '#3a2e27', g: '#7d776c', c: '#f5eee0', C: '#e0d7c5', L: '#9a6a4a', p: '#22324a', P: '#1b283c', o: '#efefef' },
+      kafa: ['.hHhhHh.', 'HhhHhhHh', 'hhHhhHhh', 'hhsssshh', 'sggssggs', 'gweggewg', 'sggSSggs', 'ssmmmmss', 'ssssssss'],
+      govde: 'cizgili', kol: 4 },
+    { ad: 'Yunus Emre Baycan', gorev: 'Finans ve Sponsorluk Direktörü',
+      renk: { h: '#221913', H: '#33261d', c: '#5b5f63', C: '#404448', i: '#c9ccd0', p: '#2a3242', P: '#212838', o: '#202020' },
+      kafa: [null, 'hhhhhhhh', 'hhhHhhhh', 'hssssssh', 'ssssssss', 'swessews', 'sssSSsss', 'sssmmsss', 'ssssssss'],
+      govde: 'ceket', kol: 11 },
+  ];
+
+  /* ───────── Piksel haritaları ───────── */
+
+  function govdeHaritasi(u) {
+    const r = [];
+    for (let y = 0; y < 12; y++) r.push('cccccccc');
+    const t = u.govde;
+    if (t === 'kolye') { r[0] = 'ccsssscc'; r[1] = 'cccyyccc'; }
+    else if (t === 'omuzAcik') { r[0] = 'ssssssss'; r[1] = 'cCccccCc'; }
+    else if (t === 'blazer') { for (let y = 0; y < 12; y++) r[y] = y < 2 ? 'cCiiiiCc' : 'cciiiicc'; }
+    else if (t === 'cizgili') { r[0] = 'cLcsscLc'; for (let y = 1; y < 12; y++) r[y] = 'cLccLcLc'; }
+    else if (t === 'ceket') { r[0] = 'cciiiicc'; r[1] = 'ccciiccc'; for (let y = 2; y < 12; y++) r[y] = 'cccCCccc'; }
+    else if (t === 'basortusu' || t === 'basortusuUzun') {
+      r[0] = 'kkkkkkkk'; r[1] = 'Kkkkkkkk'; r[2] = 'cKkkkkkc'; r[3] = 'cckkkkcc';
+      if (t === 'basortusuUzun') { r[4] = 'cckkkkcc'; r[5] = 'ccckkccc'; }
+      else r[4] = 'ccckkccc';
+    }
+    else r[0] = 'cccssccc';
+    r[11] = r[11].replace(/c/g, 'C');
+    // omuzlara dökülen uzun saç
+    if (u.sac) {
+      for (let y = 0; y < u.sac.satir; y++) {
+        const a = u.sac.dalgali && y % 2 ? 'hh' : 'h';
+        r[y] = a + r[y].slice(a.length, 8 - a.length) + a;
+      }
+    }
+    // başörtüsünün yana düşen ucu
+    if (u.uc) for (let y = 3; y < 9; y++) r[y] = 'kK' + r[y].slice(2);
+    return r;
+  }
+
+  function kolHaritasi(u, gen) {
+    const r = [];
+    for (let y = 0; y < 12; y++) {
+      const ch = y === 11 ? 'S' : y < u.kol ? 'c' : 's';
+      r.push(ch.repeat(gen));
+    }
+    if (u.govde === 'basortusu' || u.govde === 'basortusuUzun') r[0] = 'k'.repeat(gen); // omuza dökülen örtü
+    return r;
+  }
+
+  function bacakHaritasi(ic) {
+    const r = [];
+    for (let y = 0; y < 12; y++) {
+      if (y >= 10) r.push('oooo');
+      else r.push(ic === 'sag' ? 'Pppp' : 'pppP'); // iç kenar gölgeli
+    }
+    return r;
+  }
+
+  // Haritayı SVG dikdörtgenlerine çevirir; aynı renkteki yan yana pikselleri birleştirir
+  function pikseller(harita, px, py, pal) {
+    let s = '';
+    harita.forEach((satir, y) => {
+      if (!satir) return;
+      let x = 0;
+      while (x < satir.length) {
+        const ch = satir[x];
+        let n = 1;
+        while (x + n < satir.length && satir[x + n] === ch && ch !== 'e') n++;
+        if (ch !== '.' && pal[ch]) {
+          const goz = ch === 'e' ? ' class="goz"' : '';
+          s += `<rect${goz} x="${px + x}" y="${py + y}" width="${n + 0.04}" height="1.04" fill="${pal[ch]}"/>`;
+        }
+        x += n;
+      }
+    });
+    return s;
+  }
+
+  function avatarSVG(u) {
+    const pal = Object.assign({}, ORTAK, u.renk);
+    const gen = u.ince ? 3 : 4;
+    const kol = kolHaritasi(u, gen);
+    const solKolX = u.ince ? 1 : 0;
+    return `<svg class="ulkpx" viewBox="0 0 16 33" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g class="b1">${pikseller(bacakHaritasi('sol'), 4, 21, pal)}</g>
+      <g class="b2">${pikseller(bacakHaritasi('sag'), 8, 21, pal)}</g>
+      <g class="gv">${pikseller(govdeHaritasi(u), 4, 9, pal)}</g>
+      <g class="k1">${pikseller(kol, solKolX, 9, pal)}</g>
+      <g class="k2">${pikseller(kol, 12, 9, pal)}</g>
+      <g class="kf">${pikseller(u.kafa, 4, 0, pal)}</g>
+    </svg>`;
+  }
+
+  /* 3B: aynı çizim 5 katman hâlinde üst üste dizilir (z ekseninde), böylece döndüğünde kalınlığı görünür */
+  function avatar3D(u) {
+    const svg = avatarSVG(u);
+    let katmanlar = '';
+    for (let k = -2; k <= 2; k++) {
+      katmanlar += `<div class="ly${k < 0 ? ' arka' : ''}" style="transform:translateZ(calc(var(--px) * ${k}))">${svg}</div>`;
+    }
+    return `<div class="ulk-3dk"><div class="ulk-3d">${katmanlar}</div></div>`;
+  }
+
+  /* ───────── Stil ───────── */
+
+  const CSS = `
+  #ulk-av-katman{position:fixed;inset:0;pointer-events:none;z-index:90;overflow:hidden}
+  .ulk-av{--px:2.6px;position:absolute;left:0;top:0;width:calc(16*var(--px));height:calc(33*var(--px));
+    padding:0;border:0;background:none;cursor:pointer;pointer-events:auto;will-change:transform;
+    -webkit-tap-highlight-color:transparent}
+  .ulk-av{--yon:1}
+  .ulk-av.sola{--yon:-1}
+  .ulk-av .ulk-av-ic{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(10,38,39,.3));transform:scaleX(var(--yon))}
+  .ulkpx{width:100%;height:100%;display:block;overflow:visible}
+  .ulkpx g{transform-box:fill-box}
+  .ulkpx .b1,.ulkpx .b2{transform-origin:50% 0}
+  .ulkpx .k1,.ulkpx .k2{transform-origin:50% 6%}
+  .ulkpx .kf,.ulkpx .gv{transform-origin:50% 100%}
+  .ulkpx .goz{transform-box:fill-box;transform-origin:50% 50%;animation:ulkKirp 4.6s infinite}
+  .ulk-yuru .ulkpx .b1{animation:ulkAdim .28s ease-in-out infinite alternate}
+  .ulk-yuru .ulkpx .b2{animation:ulkAdim .28s ease-in-out infinite alternate-reverse}
+  .ulk-yuru .ulkpx .k2{animation:ulkSal .56s ease-in-out infinite alternate}
+  .ulk-yuru .ulkpx .k1{animation:ulkSal .56s ease-in-out infinite alternate-reverse}
+  .ulk-3dk{position:relative;width:100%;height:100%;perspective:260px}
+  .ulk-3d{position:absolute;inset:0;transform-style:preserve-3d}
+  .ulk-3d .ly{position:absolute;inset:0}
+  .ulk-3d .ly.arka{filter:brightness(.7)}
+  .ulk-yuru{--yon:1}
+  .ulk-yuru .ulk-av-ic{animation:ulkSek .28s ease-in-out infinite alternate}
+  .ulk-don .ulk-3d{animation:ulkDonme3d .5s ease-in-out}
+  .ulk-salla .ulkpx .k2{animation:ulkElSalla .5s ease-in-out infinite alternate}
+  .ulk-zipla .ulk-av-ic{animation:ulkZipla .55s cubic-bezier(.3,.7,.4,1) 2}
+  .ulk-av.sola.ulk-zipla .ulk-av-ic{animation-name:ulkZiplaSol}  @keyframes ulkSal{from{transform:rotate(10deg)}to{transform:rotate(-10deg)}}
+  @keyframes ulkAdim{from{transform:scaleY(1)}to{transform:scaleY(.8)}}
+  @keyframes ulkElSalla{from{transform:rotate(-150deg)}to{transform:rotate(-190deg)}}
+  @keyframes ulkSek{from{transform:scaleX(var(--yon)) translateY(0)}to{transform:scaleX(var(--yon)) translateY(-3%)}}
+  /* Köşede 3B dönüş: gövde katmanları Y ekseninde 180° döner; bitince --yon çevrilir (görüntü aynı kalır) */
+  @keyframes ulkDonme3d{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+  @keyframes ulkZipla{0%,100%{transform:translateY(0)}45%{transform:translateY(-28%)}}
+  @keyframes ulkZiplaSol{0%,100%{transform:scaleX(-1) translateY(0)}45%{transform:scaleX(-1) translateY(-28%)}}
+  @keyframes ulkKirp{0%,93%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}
+  .ulk-av:focus-visible{outline:2px solid #248e8f;outline-offset:3px;border-radius:6px}
+  #ulk-av-balon{position:fixed;z-index:91;pointer-events:none;opacity:0;transform:translateY(4px);
+    transition:opacity .18s,transform .18s;background:#10393a;color:#fff;border-radius:10px;
+    padding:7px 11px;font:600 13px/1.25 'Plus Jakarta Sans',system-ui,sans-serif;text-align:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.2);max-width:220px}
+  #ulk-av-balon small{display:block;font-weight:500;font-size:11px;color:#5cc6c3;margin-top:2px}
+  #ulk-av-balon.gorunur{opacity:1;transform:none}
+  #ulk-av-dugme{position:fixed;left:14px;bottom:14px;z-index:92;border:0;cursor:pointer;
+    background:#fff;color:#10393a;border-radius:999px;padding:7px 12px 7px 9px;
+    font:600 12px 'Plus Jakarta Sans',system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.18);
+    display:flex;align-items:center;gap:6px;opacity:.85}
+  #ulk-av-dugme:hover{opacity:1}
+  #ulk-av-dugme span{font-size:15px;line-height:1}
+  body.ulk-av-gizli #ulk-av-katman{display:none}
+  @media (max-width:700px){.ulk-av{--px:2px;opacity:.9}#ulk-av-dugme{padding:6px 10px 6px 8px;font-size:11px}}
+  @media (prefers-reduced-motion:reduce){.ulk-av *,.ulk-av{animation:none!important}}
+  `;
+
+  /* ───────── Kurulum ───────── */
+
+  function kur() {
+    const stil = document.createElement('style');
+    stil.textContent = CSS;
+    document.head.appendChild(stil);
+
+    const katman = document.createElement('div');
+    katman.id = 'ulk-av-katman';
+    const balon = document.createElement('div');
+    balon.id = 'ulk-av-balon';
+    balon.setAttribute('role', 'status');
+    document.body.append(katman, balon);
+
+    const azHareket = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const W = () => window.innerWidth, H = () => window.innerHeight;
+    const UST = 72; // menünün altında kal
+    const rast = (a, b) => a + Math.random() * (b - a);
+
+    const avlar = UYELER.map((u, i) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'ulk-av';
+      el.setAttribute('aria-label', `${u.ad} — ${u.gorev}`);
+      el.innerHTML = `<div class="ulk-av-ic">${avatar3D(u)}</div>`;
+      katman.appendChild(el);
+      const a = { u, el, x: rast(0, W() - 50), y: rast(UST, H() - 100), hiz: rast(26, 40),
+                  mod: 'bekle', bitis: performance.now() + rast(200, 2500), tx: 0, ty: 0, tut: false };
+      return a;
+    });
+
+    const boyut = a => [a.el.offsetWidth || 42, a.el.offsetHeight || 86];
+
+    function yeniHedef(a, t) {
+      const [w, h] = boyut(a);
+      // karşı kenara doğru yürüsün (köşeye yakın), varınca dönsün
+      const saga = a.x < W() / 2;
+      const maxX = Math.max(0, W() - w);
+      a.tx = saga ? rast(Math.max(0, maxX - 120), maxX) : rast(0, Math.min(120, maxX));
+      // çoğunlukla yatay yürüsünler, arada yukarı-aşağı geçsinler
+      a.ty = Math.min(H() - h, Math.max(UST, a.y + rast(-0.35, 0.35) * H()));
+      a.el.classList.remove('ulk-salla', 'ulk-zipla');
+      const sola = a.tx < a.x;
+      if (Math.abs(a.tx - a.x) > 2 && sola !== a.el.classList.contains('sola')) { donusBaslat(a, sola, t); return; }
+      a.mod = 'yuru';
+      a.el.classList.add('ulk-yuru');
+    }
+
+    function donusBaslat(a, sola, t) {
+      a.mod = 'don';
+      a.donBitis = t + 500;
+      a.donSola = sola;
+      a.el.classList.remove('ulk-yuru');
+      a.el.classList.add('ulk-don');
+    }
+
+    function bekle(a, t) {
+      a.mod = 'bekle';
+      a.bitis = t + rast(1200, 4000);
+      a.el.classList.remove('ulk-yuru');
+      const z = Math.random();
+      if (z < 0.4) a.el.classList.add('ulk-salla');
+      else if (z < 0.65) a.el.classList.add('ulk-zipla');
+    }
+
+    // Balon (isim + görev)
+    let balonSahibi = null, balonZaman = 0;
+    function balonGoster(a) {
+      if (balonSahibi && balonSahibi !== a) birak(balonSahibi);
+      balonSahibi = a;
+      a.tut = true;
+      a.el.classList.remove('ulk-yuru', 'ulk-zipla');
+      a.el.classList.add('ulk-salla');
+      balon.innerHTML = `${a.u.ad}<small>${a.u.gorev}</small>`;
+      balon.classList.add('gorunur');
+      balonKonum();
+    }
+    function birak(a) {
+      a.tut = false;
+      a.el.classList.remove('ulk-salla');
+      a.mod = 'bekle'; a.bitis = performance.now() + 600;
+    }
+    function balonGizle() {
+      if (balonSahibi) birak(balonSahibi);
+      balonSahibi = null;
+      balon.classList.remove('gorunur');
+    }
+    function balonKonum() {
+      if (!balonSahibi) return;
+      const r = balonSahibi.el.getBoundingClientRect();
+      const bw = balon.offsetWidth, bh = balon.offsetHeight;
+      let left = r.left + r.width / 2 - bw / 2;
+      left = Math.max(8, Math.min(W() - bw - 8, left));
+      let top = r.top - bh - 8;
+      if (top < 8) top = r.bottom + 8;
+      balon.style.left = left + 'px';
+      balon.style.top = top + 'px';
+    }
+
+    avlar.forEach(a => {
+      a.el.addEventListener('mouseenter', () => balonGoster(a));
+      a.el.addEventListener('mouseleave', () => { if (balonSahibi === a) balonGizle(); });
+      a.el.addEventListener('focus', () => balonGoster(a));
+      a.el.addEventListener('blur', () => { if (balonSahibi === a) balonGizle(); });
+      a.el.addEventListener('click', e => {
+        e.stopPropagation();
+        balonGoster(a); balonZaman = performance.now();
+      });
+    });
+    document.addEventListener('click', () => { if (balonSahibi) balonGizle(); });
+
+    // Gizle / göster düğmesi (tercih hatırlanır)
+    const dugme = document.createElement('button');
+    dugme.id = 'ulk-av-dugme';
+    dugme.type = 'button';
+    document.body.appendChild(dugme);
+    let gizli = false;
+    try { gizli = localStorage.getItem('ulkAvGizli') === '1'; } catch (e) {}
+    function dugmeGuncelle() {
+      document.body.classList.toggle('ulk-av-gizli', gizli);
+      dugme.innerHTML = gizli ? '<span>👋</span>Ekibi göster' : '<span>🙈</span>Avatarları gizle';
+      dugme.setAttribute('aria-pressed', String(gizli));
+    }
+    dugme.addEventListener('click', e => {
+      e.stopPropagation();
+      gizli = !gizli;
+      try { localStorage.setItem('ulkAvGizli', gizli ? '1' : '0'); } catch (err) {}
+      if (gizli) balonGizle();
+      dugmeGuncelle();
+    });
+    dugmeGuncelle();
+
+    // Kaydırırken yavaşla
+    let kaydirma = 0;
+    window.addEventListener('scroll', () => { kaydirma = performance.now(); }, { passive: true });
+
+    function yerlestir(a) {
+      a.el.style.transform = `translate(${a.x.toFixed(1)}px,${a.y.toFixed(1)}px)`;
+    }
+
+    if (azHareket) {
+      avlar.forEach(yerlestir);
+      return;
+    }
+
+    let once = performance.now();
+    function kare(t) {
+      const dt = Math.min(0.05, (t - once) / 1000);
+      once = t;
+      if (!gizli) {
+        const carpan = t - kaydirma < 400 ? 0.3 : 1;
+        avlar.forEach(a => {
+          const [w, h] = boyut(a);
+          if (!a.tut) {
+            if (a.mod === 'bekle' && t > a.bitis) yeniHedef(a, t);
+            if (a.mod === 'don' && t > a.donBitis) {
+              a.mod = 'yuru';
+              a.el.classList.remove('ulk-don');
+              a.el.classList.toggle('sola', a.donSola);
+              a.el.classList.add('ulk-yuru');
+            }
+            if (a.mod === 'yuru') {
+              const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
+              const adim = a.hiz * dt * carpan;
+              if (d <= adim) { a.x = a.tx; a.y = a.ty; bekle(a, t); }
+              else {
+                a.x += dx / d * adim; a.y += dy / d * adim;
+                if (Math.abs(dx) > 2) a.el.classList.toggle('sola', dx < 0);
+              }
+            }
+          }
+          a.x = Math.max(0, Math.min(W() - w, a.x));
+          a.y = Math.max(UST, Math.min(H() - h, a.y));
+          yerlestir(a);
+        });
+        // dokunmatikte balon 3 sn sonra kapanır
+        if (balonSahibi && balonZaman && t - balonZaman > 3000 && !balonSahibi.el.matches(':hover')) {
+          balonGizle(); balonZaman = 0;
+        }
+        balonKonum();
+      }
+      requestAnimationFrame(kare);
+    }
+    requestAnimationFrame(kare);
+  }
+
+  window.ULKAvatarlar = { UYELER, avatarSVG, avatar3D };
+  if (window.ULK_AVATAR_SADECE_CIZIM) return; // görsel tasarımlarda yalnızca çizim fonksiyonu kullanılır
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kur);
+  else kur();
+})();
+
+</script>
 </body></html>
