@@ -938,6 +938,15 @@
   @media (max-width:900px){#hero{grid-template-columns:minmax(0,1fr)}#hero>*{min-width:0}}
   #sponsorlar{overflow:hidden}
   html,body{overflow-x:hidden}
+
+  /* Dokunmatik: karta dokununca fotoğraf açılır (masaüstündeki hover ile aynı görünüm) */
+  @media (hover: none) {
+    .event-card { position: relative; }
+    .event-card .ev-overlay { position: absolute; inset: 0; height: auto; margin: 0; opacity: 0; pointer-events: none; }
+    .event-card .ev-overlay::after { display: block; }
+    .event-card.acik .ev-overlay { opacity: 1; }
+    .event-card.acik .event-title { position: absolute; left: 2.5rem; right: 2.5rem; bottom: 2rem; margin: 0; color: #fff !important; }
+  }
 </style>
 </head>
 <body>
@@ -1934,5 +1943,14 @@
   sifirlaDugme.addEventListener('click', () => { sifirla(); });
 })();
 
+</script>
+<script>
+document.querySelectorAll(".event-card").forEach(function (kart) {
+  kart.addEventListener("click", function () {
+    var acikMi = kart.classList.contains("acik");
+    document.querySelectorAll(".event-card.acik").forEach(function (k) { k.classList.remove("acik"); });
+    if (!acikMi) kart.classList.add("acik");
+  });
+});
 </script>
 </body></html>
