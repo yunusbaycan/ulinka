@@ -1729,6 +1729,9 @@
   }
   boyutlandir();
 
+  const ETKINLIKLER = ['Career Goals', 'HR Summit', 'Girişimciye Dair', 'Mülakat Simülasyonu', 'NextGen Mentoring', 'Teknik Geziler'];
+  let etkinlikSayaci = 0;
+
   let kus, sutunlar, skor, rekor, durum, olumZamani, zaman;
 
   try { rekor = parseInt(localStorage.getItem('ulinkaKusRekor'), 10) || 0; } catch (e) { rekor = 0; }
@@ -1778,7 +1781,8 @@
       sutunlar = sutunlar.filter(s => s.x + SUTUN_GENISLIK > -10);
       const son = sutunlar[sutunlar.length - 1];
       if (!son || son.x < W - SUTUN_ARA) {
-        sutunlar.push({ x: W + 10, bosluk: rastgele(170, 430), gecildi: false });
+        const isim = ETKINLIKLER[etkinlikSayaci++ % ETKINLIKLER.length];
+        sutunlar.push({ x: W + 10, bosluk: rastgele(170, 430), gecildi: false, isim });
       }
 
       sutunlar.forEach(s => {
@@ -1813,8 +1817,32 @@
       const rw = 54, rh = 40;
       const cx = s.x + SUTUN_GENISLIK / 2;
       cizRozet(cx, ustBitis - 22 - rh / 2 - 6, rw, rh);
-      cizRozet(cx, altBaslangic + 22 + rh / 2 + 6, rw, rh);
     }
+    if (s.isim) cizEtiket(s.x + SUTUN_GENISLIK / 2, altBaslangic + 22 + 8, s.isim);
+  }
+
+  // Alt sütunlarda etkinlik adı: kelimeleri 52px genişliğe sığacak şekilde satırlara böler
+  function cizEtiket(cx, ustY, metin) {
+    ctx.font = "700 11px 'Plus Jakarta Sans', system-ui, sans-serif";
+    const kelimeler = metin.split(' ');
+    const satirlar = [];
+    let satir = '';
+    kelimeler.forEach(k => {
+      const aday = satir ? satir + ' ' + k : k;
+      if (ctx.measureText(aday).width > 52 && satir) { satirlar.push(satir); satir = k; }
+      else satir = aday;
+    });
+    if (satir) satirlar.push(satir);
+    const sat = 13, rh = satirlar.length * sat + 8, rw = 56;
+    ctx.fillStyle = '#10393a';
+    ctx.beginPath();
+    ctx.roundRect(cx - rw / 2, ustY, rw, rh, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    satirlar.forEach((s, i) => ctx.fillText(s, cx, ustY + 4 + sat / 2 + i * sat));
+    ctx.textBaseline = 'alphabetic';
   }
 
   function cizRozet(cx, cy, rw, rh) {
