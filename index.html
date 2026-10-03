@@ -1465,16 +1465,6 @@
     </svg>`;
   }
 
-  /* 3B: aynı çizim 5 katman hâlinde üst üste dizilir (z ekseninde), böylece döndüğünde kalınlığı görünür */
-  function avatar3D(u) {
-    const svg = avatarSVG(u);
-    let katmanlar = '';
-    for (let k = -2; k <= 2; k++) {
-      katmanlar += `<div class="ly${k < 0 ? ' arka' : ''}" style="transform:translateZ(calc(var(--px) * ${k}))">${svg}</div>`;
-    }
-    return `<div class="ulk-3dk"><div class="ulk-3d">${katmanlar}</div></div>`;
-  }
-
   /* ───────── Stil ───────── */
 
   const CSS = `
@@ -1482,9 +1472,8 @@
   .ulk-av{--px:2.6px;position:absolute;left:0;top:0;width:calc(16*var(--px));height:calc(33*var(--px));
     padding:0;border:0;background:none;cursor:pointer;pointer-events:auto;will-change:transform;
     -webkit-tap-highlight-color:transparent}
-  .ulk-av{--yon:1}
-  .ulk-av.sola{--yon:-1}
-  .ulk-av .ulk-av-ic{width:100%;height:100%;transform:scaleX(var(--yon))}
+  .ulk-av .ulk-av-ic{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(10,38,39,.3))}
+  .ulk-av.sola .ulk-av-ic{transform:scaleX(-1)}
   .ulkpx{width:100%;height:100%;display:block;overflow:visible}
   .ulkpx g{transform-box:fill-box}
   .ulkpx .b1,.ulkpx .b2{transform-origin:50% 0}
@@ -1495,21 +1484,16 @@
   .ulk-yuru .ulkpx .b2{animation:ulkAdim .28s ease-in-out infinite alternate-reverse}
   .ulk-yuru .ulkpx .k2{animation:ulkSal .56s ease-in-out infinite alternate}
   .ulk-yuru .ulkpx .k1{animation:ulkSal .56s ease-in-out infinite alternate-reverse}
-  .ulk-3dk{position:relative;width:100%;height:100%;perspective:260px}
-  .ulk-3d{position:absolute;inset:0;transform-style:preserve-3d}
-  .ulk-3d .ly{position:absolute;inset:0}
-  .ulk-3d .ly.arka{filter:brightness(.7)}
-  .ulk-yuru{--yon:1}
   .ulk-yuru .ulk-av-ic{animation:ulkSek .28s ease-in-out infinite alternate}
-  .ulk-don .ulk-3d{animation:ulkDonme3d .5s ease-in-out}
   .ulk-salla .ulkpx .k2{animation:ulkElSalla .5s ease-in-out infinite alternate}
   .ulk-zipla .ulk-av-ic{animation:ulkZipla .55s cubic-bezier(.3,.7,.4,1) 2}
-  .ulk-av.sola.ulk-zipla .ulk-av-ic{animation-name:ulkZiplaSol}  @keyframes ulkSal{from{transform:rotate(10deg)}to{transform:rotate(-10deg)}}
+  .ulk-av.sola.ulk-yuru .ulk-av-ic{animation-name:ulkSekSol}
+  .ulk-av.sola.ulk-zipla .ulk-av-ic{animation-name:ulkZiplaSol}
+  @keyframes ulkSal{from{transform:rotate(10deg)}to{transform:rotate(-10deg)}}
   @keyframes ulkAdim{from{transform:scaleY(1)}to{transform:scaleY(.8)}}
   @keyframes ulkElSalla{from{transform:rotate(-150deg)}to{transform:rotate(-190deg)}}
-  @keyframes ulkSek{from{transform:scaleX(var(--yon)) translateY(0)}to{transform:scaleX(var(--yon)) translateY(-3%)}}
-  /* Köşede 3B dönüş: gövde katmanları Y ekseninde 180° döner; bitince --yon çevrilir (görüntü aynı kalır) */
-  @keyframes ulkDonme3d{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+  @keyframes ulkSek{from{transform:translateY(0)}to{transform:translateY(-3%)}}
+  @keyframes ulkSekSol{from{transform:scaleX(-1) translateY(0)}to{transform:scaleX(-1) translateY(-3%)}}
   @keyframes ulkZipla{0%,100%{transform:translateY(0)}45%{transform:translateY(-28%)}}
   @keyframes ulkZiplaSol{0%,100%{transform:scaleX(-1) translateY(0)}45%{transform:scaleX(-1) translateY(-28%)}}
   @keyframes ulkKirp{0%,93%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}
@@ -1566,29 +1550,14 @@
     const boyut = a => a.olcu || (a.olcu = [a.el.offsetWidth || 42, a.el.offsetHeight || 86]);
     window.addEventListener('resize', () => avlar.forEach(a => { a.olcu = null; }), { passive: true });
 
-    function yeniHedef(a, t) {
+    function yeniHedef(a) {
       const [w, h] = boyut(a);
-      // karşı kenara doğru yürüsün (köşeye yakın), varınca dönsün
-      const saga = a.x < W() / 2;
-      const maxX = Math.max(0, W() - w);
-      a.tx = saga ? rast(Math.max(0, maxX - 120), maxX) : rast(0, Math.min(120, maxX));
+      a.tx = rast(0, Math.max(0, W() - w));
       // çoğunlukla yatay yürüsünler, arada yukarı-aşağı geçsinler
       a.ty = Math.min(H() - h, Math.max(UST, a.y + rast(-0.35, 0.35) * H()));
-      a.el.classList.remove('ulk-salla', 'ulk-zipla');
-      const sola = a.tx < a.x;
-      if (Math.abs(a.tx - a.x) > 2 && sola !== a.el.classList.contains('sola')) { donusBaslat(a, sola, t); return; }
       a.mod = 'yuru';
+      a.el.classList.remove('ulk-salla', 'ulk-zipla');
       a.el.classList.add('ulk-yuru');
-    }
-
-    function donusBaslat(a, sola, t) {
-      a.mod = 'don';
-      a.donBitis = t + 500;
-      a.donSola = sola;
-      a.el.classList.remove('ulk-yuru');
-      a.el.classList.add('ulk-don');
-      // 3B katmanlar yalnızca dönüş süresince oluşturulur (diğer zamanlarda tek çizim yeter)
-      a.el.querySelector('.ulk-av-ic').innerHTML = avatar3D(a.u);
     }
 
     function bekle(a, t) {
@@ -1692,14 +1661,7 @@
         avlar.forEach(a => {
           const [w, h] = boyut(a);
           if (!a.tut) {
-            if (a.mod === 'bekle' && t > a.bitis) yeniHedef(a, t);
-            if (a.mod === 'don' && t > a.donBitis) {
-              a.mod = 'yuru';
-              a.el.classList.remove('ulk-don');
-              a.el.classList.toggle('sola', a.donSola);
-              a.el.classList.add('ulk-yuru');
-              a.el.querySelector('.ulk-av-ic').innerHTML = avatarSVG(a.u);
-            }
+            if (a.mod === 'bekle' && t > a.bitis) yeniHedef(a);
             if (a.mod === 'yuru') {
               const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
               const adim = a.hiz * dt * carpan;
@@ -1725,7 +1687,7 @@
     requestAnimationFrame(kare);
   }
 
-  window.ULKAvatarlar = { UYELER, avatarSVG, avatar3D };
+  window.ULKAvatarlar = { UYELER, avatarSVG };
   if (window.ULK_AVATAR_SADECE_CIZIM) return; // görsel tasarımlarda yalnızca çizim fonksiyonu kullanılır
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kur);
