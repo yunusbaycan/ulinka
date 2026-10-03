@@ -1484,7 +1484,7 @@
     -webkit-tap-highlight-color:transparent}
   .ulk-av{--yon:1}
   .ulk-av.sola{--yon:-1}
-  .ulk-av .ulk-av-ic{width:100%;height:100%;filter:drop-shadow(0 3px 3px rgba(10,38,39,.3));transform:scaleX(var(--yon))}
+  .ulk-av .ulk-av-ic{width:100%;height:100%;transform:scaleX(var(--yon))}
   .ulkpx{width:100%;height:100%;display:block;overflow:visible}
   .ulkpx g{transform-box:fill-box}
   .ulkpx .b1,.ulkpx .b2{transform-origin:50% 0}
@@ -1555,14 +1555,16 @@
       el.type = 'button';
       el.className = 'ulk-av';
       el.setAttribute('aria-label', `${u.ad} — ${u.gorev}`);
-      el.innerHTML = `<div class="ulk-av-ic">${avatar3D(u)}</div>`;
+      el.innerHTML = `<div class="ulk-av-ic">${avatarSVG(u)}</div>`;
       katman.appendChild(el);
       const a = { u, el, x: rast(0, W() - 50), y: rast(UST, H() - 100), hiz: rast(26, 40),
                   mod: 'bekle', bitis: performance.now() + rast(200, 2500), tx: 0, ty: 0, tut: false };
       return a;
     });
 
-    const boyut = a => [a.el.offsetWidth || 42, a.el.offsetHeight || 86];
+    // Boyut her karede ölçülmesin (ölçüm düzen zorlar); yeniden boyutlanınca sıfırlanır
+    const boyut = a => a.olcu || (a.olcu = [a.el.offsetWidth || 42, a.el.offsetHeight || 86]);
+    window.addEventListener('resize', () => avlar.forEach(a => { a.olcu = null; }), { passive: true });
 
     function yeniHedef(a, t) {
       const [w, h] = boyut(a);
@@ -1585,6 +1587,8 @@
       a.donSola = sola;
       a.el.classList.remove('ulk-yuru');
       a.el.classList.add('ulk-don');
+      // 3B katmanlar yalnızca dönüş süresince oluşturulur (diğer zamanlarda tek çizim yeter)
+      a.el.querySelector('.ulk-av-ic').innerHTML = avatar3D(a.u);
     }
 
     function bekle(a, t) {
@@ -1668,7 +1672,10 @@
     window.addEventListener('scroll', () => { kaydirma = performance.now(); }, { passive: true });
 
     function yerlestir(a) {
-      a.el.style.transform = `translate(${a.x.toFixed(1)}px,${a.y.toFixed(1)}px)`;
+      const x = Math.round(a.x * 10) / 10, y = Math.round(a.y * 10) / 10;
+      if (x === a.sonX && y === a.sonY) return; // konum değişmediyse stil yazma
+      a.sonX = x; a.sonY = y;
+      a.el.style.transform = `translate(${x}px,${y}px)`;
     }
 
     if (azHareket) {
@@ -1691,6 +1698,7 @@
               a.el.classList.remove('ulk-don');
               a.el.classList.toggle('sola', a.donSola);
               a.el.classList.add('ulk-yuru');
+              a.el.querySelector('.ulk-av-ic').innerHTML = avatarSVG(a.u);
             }
             if (a.mod === 'yuru') {
               const dx = a.tx - a.x, dy = a.ty - a.y, d = Math.hypot(dx, dy);
